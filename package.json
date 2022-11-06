@@ -1,0 +1,17 @@
+{
+  "name": "polyhedra",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite & pnpm run sass",
+    "build": "vite build",
+    "sass": "node-sass -w src/global.sass -o public",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.1.0",
+    "svelte": "^3.52.0",
+    "vite": "^3.2.0"
+  }
+}
