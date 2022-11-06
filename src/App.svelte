@@ -11,7 +11,7 @@
 
 	let container, scene, camera, renderer, controls
 	let mesh, faces
-	let parameters, polyhedronMesh, gui, categoryFolders, inited
+	let parameters, polyhedronMesh, gui, categoryFolders, inited, canvas
 
 	onMount( e => {
 		init()
@@ -49,8 +49,9 @@
 
 		scene = new THREE.Scene()
 
-		let SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight
-		let VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000
+		const width = canvas.offsetWidth
+		const height = canvas.offsetHeight
+		let VIEW_ANGLE = 45, ASPECT = width / height, NEAR = 0.1, FAR = 20000
 
 		camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR)
 		scene.add(camera)
@@ -58,7 +59,7 @@
 		camera.lookAt(scene.position)  
 
 		renderer = Detector.webgl ? new THREE.WebGLRenderer( {antialias:true} ) : new THREE.CanvasRenderer() 
-		renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT)
+		renderer.setSize(width, height)
 		container = document.getElementById( 'threejs' )
 		container.appendChild( renderer.domElement )
 
@@ -105,15 +106,13 @@
 	}
 
 
-	function displayPolyhedron(data)
-	{
+	function displayPolyhedron(data) {
 		scene.remove(polyhedronMesh)
 		polyhedronMesh = polyhedronDataToMesh(data)
 		scene.add(polyhedronMesh)
 	}
 
-	function polyhedronDataToMesh(data)
-	{
+	function polyhedronDataToMesh(data) {
 		let polyhedron = new THREE.Object3D()
 		
 		// convert vertex data to THREE.js vectors
@@ -121,25 +120,6 @@
 		let vertex = [] 
 		for (let i = 0; i < data.vertex.length; i++)
 			vertex.push( new THREE.Vector3( data.vertex[i][0], data.vertex[i][1], data.vertex[i][2] ).multiplyScalar(100) )
-
-
-		if (booleans.points) {
-
-			let vertexGeometry = new THREE.SphereGeometry( 6, 12, 6 )
-			let vertexSingleMesh = new THREE.Mesh( vertexGeometry )
-
-			let vertexMaterial = new THREE.MeshLambertMaterial( { color: 0x222244 } )
-			let vertexAmalgam = new THREE.Geometry()
-			for (let i = 0; i < data.vertex.length; i++)
-			{
-				let vMesh = vertexSingleMesh.clone()
-				vMesh.position = vertex[i]
-				THREE.GeometryUtils.merge( vertexAmalgam, vMesh )
-			}
-			let vertexMesh = new THREE.Mesh( vertexAmalgam, vertexMaterial )
-			polyhedron.add( vertexMesh )
-		}
-
 
 
 
@@ -210,7 +190,7 @@
 
 
 			let edgeMaterial = new THREE.MeshLambertMaterial( {
-					color: 0xffcb94,
+					color: 0xFFFFFF,
 					map: booleans.material ? new THREE.ImageUtils.loadTexture( "/stemkoski/Three.js/images/rock-512.jpg") : null,
 					opacity: 1
 			} )
@@ -228,10 +208,31 @@
 
 		}
 
+
+		if (booleans.points) {
+
+			let vertexGeometry = new THREE.SphereGeometry( strutRadius * 1, 32, 32 )
+			let vertexSingleMesh = new THREE.Mesh( vertexGeometry )
+
+			let vertexMaterial = new THREE.MeshLambertMaterial( { color: 0x00FFFF } )
+			let vertexAmalgam = new THREE.Geometry()
+			for (let i = 0; i < data.vertex.length; i++)
+			{
+				let vMesh = vertexSingleMesh.clone()
+				vMesh.position = vertex[i]
+				THREE.GeometryUtils.merge( vertexAmalgam, vMesh )
+			}
+			let vertexMesh = new THREE.Mesh( vertexAmalgam, vertexMaterial )
+			polyhedron.add( vertexMesh )
+		}
+
+
+
 		return polyhedron
 	}
 
 
+	let strutLength, strutRadius
 
 	function cylinderMesh(point1, point2, material) {
 
@@ -240,18 +241,18 @@
 		let rotation = new THREE.Vector3().setEulerFromQuaternion(arrow.quaternion)
 
 
-		let BAMBOO_LENGTH = parseInt( direction.length() )
-		let BAMBOO_WIDTH = (BAMBOO_LENGTH/numbers.length) * numbers.radius
+		strutLength = parseInt( direction.length() )
+		strutRadius = (strutLength/numbers.length) * numbers.radius
 
-		BAMBOO_LENGTH -= BAMBOO_WIDTH * 4
+		strutLength -= strutRadius * 4
 
 
-		if (ALL_LENGTHS.indexOf( BAMBOO_LENGTH ) == -1) ALL_LENGTHS.push( BAMBOO_LENGTH )
+		if (ALL_LENGTHS.indexOf( strutLength ) == -1) ALL_LENGTHS.push( strutLength )
 
 		let edgeGeometry = new THREE.CylinderGeometry( 
-			BAMBOO_WIDTH, 
-			BAMBOO_WIDTH, 
-			BAMBOO_LENGTH, 
+			strutRadius, 
+			strutRadius, 
+			strutLength, 
 			config.radial_segments, 
 			config.height_segments,
 			false, // open
@@ -270,18 +271,31 @@
 		controls.update()
 	}
 
+	let hideInterface = false
+	function onKeydown(e) {
+		console.log(e, e.key)
+		if (e.key == 'i') hideInterface = !hideInterface
+	}
+
 </script>
 
-<div class="flex row cgrow w100pc light9 bg">
+<svelte:window on:keydown={onKeydown} />
+
+<div 
+	style="background:white"
+	class="flex row cgrow w100pc light9 bg ">
 	<div 
-		class="grow rel overflow-hidden"
+		class="grow rel overflow-hidden fill"
+		bind:this={canvas}
 		id="threejs">
-		<div class="fixed b0 l0 column flex p0-5 cpb0-5">
+		<div 
+			class="fixed b0 l0 column flex p0-5 cpb0-5"
+			class:none={hideInterface}>
 			<span class="bolder">
 				<span class="f3">πολύεδρον</span>
 			</span>
 			<span>Experiments with Polyhedra</span>
-			<span>Staramaki Proposal Nov'22</span>
+			<span>Proposal, November 2022</span>
 			<!-- <a href="mailto:autr.dev@gmail.com">Gilbert Sinnott</a> -->
 		</div>
 		<div class="fixed t0 l0 column flex p0-5 cpb0-5">
@@ -293,12 +307,12 @@
 				<span class="color green5">{CURRENT.edge.length}</span>
 			</span>
 			<span>
-				Plugs: 
-				<span class="color green5">{CURRENT.vertex.length}</span>
-			</span>
-			<span>
 				Faces: 
 				<span class="color green5">{CURRENT.face.length}</span>
+			</span>
+			<span>
+				Connectors: 
+				<span class="color green5">{CURRENT.vertex.length}</span>
 			</span>
 			{#each Object.entries(numbers) as [key,val]}
 
@@ -324,7 +338,8 @@
 	</div>
 
 	<aside
-		class="cptb0-5 cplr0-5 dark6 color br overflow-auto h100vh minw17em">
+		class="cptb0-5 cplr0-5 dark6 color br overflow-auto h100vh maxw17em fixed t0 r0"
+		class:none={hideInterface}>
 		{#each Object.entries(SHAPES) as [category,shapes]}
 			<div class="bold">
 				{category}
