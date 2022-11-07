@@ -23,6 +23,14 @@
 		radius: 1,
 		opacity: 0.75
 	}
+
+	let steps = {
+		length: 1,
+		radius: 0.1,
+		opacity: 0.05
+	}
+
+
 	let booleans = {
 		material: true,
 		points: false,
@@ -314,6 +322,7 @@
 				Connectors: 
 				<span class="color green5">{CURRENT.vertex.length}</span>
 			</span>
+
 			{#each Object.entries(numbers) as [key,val]}
 
 				<span>
@@ -321,9 +330,13 @@
 					<input 
 						type="number" 
 						class="maxw4em purple5 color"
+						step={steps[key]}
 						bind:value={numbers[key]} />
 				</span>
+
 			{/each}
+
+
 			{#each Object.entries(booleans) as [key,val]}
 
 				<span>
