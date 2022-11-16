@@ -10,7 +10,7 @@
 	BACKGROUND_COLOR = 0xffffff
 
 	let container, scene, camera, renderer, controls
-	let mesh, faces
+	let mesh, faces, interior
 	let parameters, polyhedronMesh, gui, categoryFolders, inited, canvas
 
 	onMount( e => {
@@ -34,7 +34,7 @@
 	let booleans = {
 		material: true,
 		points: false,
-		faces: false
+		faces: true
 	}
 
 	let config = {
@@ -155,24 +155,25 @@
 
 			let geometry = new THREE.Geometry()
 			geometry.vertices = vertex
+
+			let rigidGeo = new THREE.Geometry()
+			rigidGeo.vertices = vertex
 			let faceIndex = 0
-			for (let faceNum = 0; faceNum < data.face.length; faceNum++)
-			{
-				for (let i = 0; i < data.face[faceNum].length - 2; i++)
-				{
-					geometry.faces[faceIndex] = new THREE.Face3( data.face[faceNum][0], data.face[faceNum][i+1], data.face[faceNum][i+2] )
-					geometry.faces[faceIndex].color = faceColors[data.face[faceNum].length]
+			for (let faceNum = 0; faceNum < data.face.length; faceNum++) {
 
-					faceIndex++
-				}
+					const face = data.face[faceNum]
+					const visible = face.length > 3
+
+					for (let i = 0; i < face.length - 2; i++) {
+						geometry.faces[faceIndex] = new THREE.Face3( face[0], face[i+1], face[i+2] )
+						geometry.faces[faceIndex].color = faceColors[face.length]
+
+						rigidGeo.faces[faceIndex] = new THREE.Face3( face[0], face[i+1], face[i+2] )
+
+						faceIndex++
+					}
 			}
-			
-			geometry.computeFaceNormals()
-			geometry.computeVertexNormals()
-
-			faces = new THREE.Mesh(geometry, faceMaterial)
-			faces.scale.multiplyScalar(1.01)
-
+			console.log(faceIndex, vertex.length)
 			
 			let interiorMaterial = new THREE.MeshBasicMaterial( { 
 				color: 0xffffff, 
@@ -180,12 +181,19 @@
 				side: THREE.BackSide 
 			} )
 			
-			let interiorFaces = new THREE.Mesh(geometry, interiorMaterial)
-			interiorFaces.scale.multiplyScalar(0.99)
+			geometry.computeFaceNormals()
+			geometry.computeVertexNormals()
+
+			faces = new THREE.Mesh(geometry, faceMaterial)
+			interior = new THREE.Mesh(geometry, interiorMaterial)
+
+			faces.scale.multiplyScalar(1.01)
+			interior.scale.multiplyScalar(0.99)
+
+			
 
 			if (booleans.faces) {
-				polyhedron.add(faces)
-				// polyhedron.add( interiorFaces )
+				polyhedron.add( faces )
 			}
 
 			
@@ -291,9 +299,10 @@
 
 <div 
 	style="background:white"
-	class="flex row cgrow w100pc light9 bg ">
+	class="flex row cgrow w100pc light9 bg fill">
 	<div 
 		class="grow rel overflow-hidden fill"
+		style="height:100vh;width:100vw;"
 		bind:this={canvas}
 		id="threejs">
 		<div 
