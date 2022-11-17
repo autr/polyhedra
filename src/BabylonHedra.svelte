@@ -5,8 +5,9 @@
 	// import { AmmoJSPlugin } from '@babylonjs/core/Physics/Plugins/ammoJSPlugin'
 	import Ammo from 'ammojs-typed'
 	import earcut from 'earcut'
+	import { FresnelVertex, FresnelFragment } from './BabylonShaders.js'
 
-	let engine, physics, canvas, scene, camera, light
+	let engine, physics, canvas, scene, camera, light, shader
 
 	let ground, sphereA, sphereB, axes
 
@@ -21,9 +22,12 @@
 	}
 
 
+    BB.Effect.ShadersStore["customVertexShader"] = FresnelVertex
+    BB.Effect.ShadersStore["customFragmentShader"] = FresnelFragment
+
 	let params = {
 		demo: {
-			particlesCount: 0, //100,
+			particlesCount: 200, //100,
 			polygonsCount: 1,
 			maxSides: 8,
 			showAxes: false
@@ -34,23 +38,25 @@
 			debugger: true
 		},
 		scenePhysics: {
-			gravity: 50,
-			ground: true
+			gravity: 0,
+			ground: false
 		},
 		magnetImpulse: {
-			amount: 200,
+			amount: 100,
+			minimumCharge: 10,
+			maxDistance: 2000,
 			invert: false
 		},
 		sphereSize: {
-			diameter: 5,
-			segments: 32
+			diameter: 6,
+			segments: 24
 		},
 		magnetPhysics: {
 			mass: 10,
 			friction: 0,
-			restitution: -10,
-			linearDamping: 0.95,
-			angularDamping: 0.95,
+			restitution: 0,
+			linearDamping: 0.6,
+			angularDamping: 0.98,
 		},
 		strutJoints: {
 			rigid: true,
@@ -113,16 +119,22 @@
 	async function init() {
 
 		window.CANNON = CANNON
-		const ammo = await Ammo()
-		
-		console.log(Ammo)
 
-		engine = new BABYLON.AmmoJSPlugin( true, ammo )
+		// const ammo = await Ammo()
+		shader = new BABYLON.ShaderMaterial("shader", scene, {
+				vertex: "custom",
+				fragment: "custom",
+			},
+			{
+				attributes: ["position", "normal", "uv"],
+				uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+			})
 
+        // shader.backFaceCulling = false
 
-		// new BABYLON.Engine( canvas, true, {preserveDrawingBuffer: true, 
-		// 	stencil: true
-		// })
+		engine = new BABYLON.Engine( canvas, true, {preserveDrawingBuffer: true, 
+			stencil: true
+		})
 
 		physics = new BABYLON.CannonJSPlugin()
 		physics.setTimeStep(0)
@@ -173,6 +185,10 @@
 
 		window.physics = physics
 
+		for (const magnet of inventory.magnets) {
+			// magnet.material = shader
+		}
+
 	}
 
 	function onKeydown(e) {
@@ -208,7 +224,11 @@
 		for (let i = 0; i < amount; i++) createRandomMagneticPolygon()
 	} 
 
+	let time
 	function runRenderLoop() {
+		shader.setFloat('time', time)
+		time += 0.02
+        shader.setVector3('cameraPosition', scene.activeCamera.position);
 		scene.render()
 	}
 
@@ -336,6 +356,7 @@
 		if (magnetPhysics.linearDamping > 0) magnet.physicsImpostor.physicsBody.linearDamping = magnetPhysics.linearDamping
 		if (magnetPhysics.angularDamping > 0) magnet.physicsImpostor.physicsBody.angularDamping = magnetPhysics.angularDamping
 
+
 		if (parent) magnet.setParent( parent )
 		inventory.magnets.push( magnet )
 		return magnet
@@ -435,7 +456,7 @@
 
 	function runMagnetImpulses() {
 
-		const { amount, invert } = params.magnetImpulse
+		const { amount, invert, minimumCharge, maxDistance } = params.magnetImpulse
 		if (amount > 0) {
 			for ( const m1 of inventory.magnets ) {
 				for ( const m2 of inventory.magnets ) {
@@ -446,10 +467,12 @@
 					*/
 
 					const distance = BB.Vector3.DistanceSquared(m1.position, m2.position)
-					const charge = 1 / distance * amount
-					const force = charge * (invert ? 1 : -1)
-					const vector = m1.position.subtract(m2.position).normalize().scale(force)
-					m1.applyImpulse(vector, m1.getAbsolutePosition())
+					if (distance < maxDistance) {
+						const charge = Math.max( 1 / distance * amount, (minimumCharge || 0)/100 )
+						const force = charge * (invert ? 1 : -1)
+						const vector = m1.position.subtract(m2.position).normalize().scale(force)
+						m1.applyImpulse(vector, m1.getAbsolutePosition())
+					}
 				}
 			}
 		}

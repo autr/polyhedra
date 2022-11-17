@@ -17,6 +17,7 @@
   "dependencies": {
     "ammo.js": "github:kripken/ammo.js",
     "ammojs": "^0.0.2",
+    "ammojs-typed": "^1.0.6",
     "babylonjs": "^5.32.2",
     "cannon-es": "^0.20.0",
     "earcut": "^2.2.4"
