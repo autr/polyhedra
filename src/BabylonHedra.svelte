@@ -27,8 +27,8 @@
 
 	let params = {
 		demo: {
-			particlesCount: 200, //100,
-			polygonsCount: 1,
+			particlesCount: 20, //100,
+			polygonsCount: 2,
 			maxSides: 8,
 			showAxes: false
 
@@ -44,11 +44,11 @@
 		magnetImpulse: {
 			amount: 100,
 			minimumCharge: 10,
-			maxDistance: 2000,
+			maxDistance: 4000,
 			invert: false
 		},
 		sphereSize: {
-			diameter: 6,
+			diameter: 4,
 			segments: 24
 		},
 		magnetPhysics: {

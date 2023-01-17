@@ -7,7 +7,7 @@
 
 	onMount( e => {})
 
-	const BABYLON = true
+	const BABYLON = false
 
 </script>
 

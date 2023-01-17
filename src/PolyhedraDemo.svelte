@@ -21,7 +21,8 @@
 	let numbers = {
 		length: 30,
 		radius: 1,
-		opacity: 0.75
+		opacity: 0.75,
+		rotate: 0.1
 	}
 
 	let steps = {
@@ -33,8 +34,8 @@
 
 	let booleans = {
 		material: true,
-		points: false,
-		faces: true
+		points: true,
+		faces: false
 	}
 
 	let config = {
@@ -115,8 +116,10 @@
 
 
 	function displayPolyhedron(data) {
+		const r = polyhedronMesh.rotation.y
 		scene.remove(polyhedronMesh)
 		polyhedronMesh = polyhedronDataToMesh(data)
+		polyhedronMesh.rotation.y = r
 		scene.add(polyhedronMesh)
 	}
 
@@ -284,6 +287,9 @@
 	function animate() {
 		requestAnimationFrame( animate )
 		renderer.render( scene, camera )
+		// polyhedronMesh.rotation.x += numbers.rotate / 100
+		polyhedronMesh.rotation.y += numbers.rotate / 100
+		// polyhedronMesh.rotation.z += numbers.rotate / 100
 		controls.update()
 	}
 
@@ -312,7 +318,7 @@
 				<span class="f3">πολύεδρον</span>
 			</span>
 			<span>Experiments with Polyhedra</span>
-			<span>Proposal, November 2022</span>
+			<span>BetterFactory, January 2023</span>
 			<!-- <a href="mailto:autr.dev@gmail.com">Gilbert Sinnott</a> -->
 		</div>
 		<div class="fixed t0 l0 column flex p0-5 cpb0-5">
